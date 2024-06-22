@@ -15,10 +15,69 @@ class possibleWords:
     def getPossibleWords(self):
         return self.possibleWords
     
-    def getBestStartingWord(self):
-        # Calculate best starting word
+    def getBestStartingWords(self, option):
+        # Calculate the best starting words
 
-        return "dont know yet"
+        if option == "recommended":
+            # Some starting words that are known to be good openers
+            return ["CRANE", "SAUCY", "SLATE"]
+        else:
+            # Calculate the most common characters, so opening words can be given which provide the most information possible
+            chars = {}
+
+            allChars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+            for c in allChars:
+                # char : {index: num_times}
+                chars[c] = 0
+
+            # get character frequencies
+            for word in self.possibleWords:
+                unique = set()
+                for i in range(0, len(word)):
+                    unique.add(word[i])
+
+                for item in unique:
+                    chars[item] += 1
+
+            # Characters with the highest frequency are first in the dict
+            sorted_amounts = sorted(chars.items(), key = lambda item : item[1], reverse=True)
+
+            amounts = {}
+
+            for i in range(len(sorted_amounts)):
+                char, amount = sorted_amounts[i]
+
+                amounts[char] = [amount, i]
+
+            print()
+            # This dict is the same as before, but includes the index; The lower the index, the more frequent the character (ranking)
+            print("Characters with the highest frequency: ", amounts)
+            print()
+
+            # Now we're gonna check the words again. We will add up the ranks of the characters included, 
+            # and the words with the lowest combined ranking will have the most common characters.
+            
+            words = {}
+
+            for word in self.possibleWords:
+                rankings = 0
+                unique = set()
+                for i in range(len(word)):
+                    rankings += amounts[word[i]][1]
+
+                    unique.add(word[i])
+                    
+                words[word] = rankings
+
+                if len(unique) != 5:
+                    # Not eligible because repeat characters, so let's toss it out
+                    words[word] += 1000
+
+            # Finally return the 5 best starting words in terms of:
+            # 1) Unique characters
+            # 2) The most common characters are included
+            return list(dict(sorted(words.items(), key = lambda item : item[1])).keys())[:5]
+
 
 class CharState:
     UNAVAILABLE = 0
@@ -52,7 +111,7 @@ for i in range(0, 5):
 #print(possibleWords.getPossibleWords())
 
 print("Welcome to Helple, the Wordle helper. Solve your daily Wordle with this application and get the words with the highest possibility of being the correct word.")
-print("The best possible starting word is: ", possWords.getBestStartingWord())
+print("Some good starting words are: ", possWords.getBestStartingWords("other"))
 
 while True:
     print("Enter chosen Wordle word: ", end="")
