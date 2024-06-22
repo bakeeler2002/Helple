@@ -1,3 +1,13 @@
+# Helple : Blake Keeler
+# This is a Wordle helper which, given the information you provide from Wordle,
+# will let you know the remaining number of solutions along with giving you
+# those words. Based on narrowing down the possible solutions, it is very unlikely
+# to be unable to solve the daily Wordle now.
+# This project also gives you a good list of starting words which cover the most
+# common character among the possible solutions.
+
+
+# Each position (0-4) of a word can be a letter from A-Z
 allChars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 class possibleWords:
@@ -6,8 +16,10 @@ class possibleWords:
         self.getAllPossibleWords()
     
     def getAllPossibleWords(self):
+        # .txt file of all available Wordle words
         file = open("words.txt", "r")
         for line in file:
+            # remove \n
             line = line[:len(line)-1]
             words = line.split('\t')
             for word in words:
@@ -52,7 +64,7 @@ class possibleWords:
 
             print()
             # This dict is the same as before, but includes the index; The lower the index, the more frequent the character (ranking)
-            print("Characters with the highest frequency: ", amounts)
+            print("Characters with the highest frequency: ", sorted_amounts)
             print()
 
             # Now we're gonna check the words again. We will add up the ranks of the characters included, 
@@ -80,13 +92,6 @@ class possibleWords:
             return list(dict(sorted(words.items(), key = lambda item : item[1])).keys())[:5]
         
     def updatePossibleWords(self, unavailable, available_diff_spot, correct):
-
-        print(unavailable)
-        print()
-        print(available_diff_spot)
-        print(correct)
-        print()
-
         updated_words = []
 
         for word in self.possibleWords:
@@ -96,67 +101,30 @@ class possibleWords:
             for u in unavailable:
                 if u in word:
                     add_flag = False
-                    break
                 
             # yellow characters : in word but different positions
             for char, position in available_diff_spot.items():
                 if word[position] == char:
                     add_flag = False
-                    break
                 
                 # must still be in the word
                 if char not in word:
                     add_flag = False
-                    break
 
             # green characters : in word AT same position
             for char, position in correct.items():
                 if word[position] != char:
                     add_flag = False
-                    break
 
             if add_flag:
                 updated_words.append(word)
-
-                
             
         self.possibleWords = updated_words
         return updated_words
 
-
-
-class CharState:
-    UNAVAILABLE = 0
-    DIFFERENT_SPOT = 1
-    CORRECT = 2
-    AVAILABLE = 3
-    
-class possibleChars:
-    # This is a dict of characters corresponding to a position in the input. 
-    # Many characters can get eliminated from a spot based on provided information.
-    def __init__(self):
-        self.possibleChars = {}
-        self.setPossibleChars()
-
-    def setPossibleChars(self):
-        allChars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-        for c in allChars:
-            self.possibleChars[c] = CharState.AVAILABLE
-
-    def getPossibleChars(self):
-        return self.possibleChars
-    
-    def updateChar(self, char, state):
-        self.possibleChars[char] = state
-    
-
 # main
 def main():
     possWords = possibleWords()
-
-    possChars = []
-    for i in range(0, 5):
-        possChars.append(possibleChars())
 
     print("Welcome to Helple, the Wordle helper. Solve your daily Wordle with this application and get the words with the highest possibility of being the correct word.")
     print("Some good starting words are: ", possWords.getBestStartingWords("other"))
@@ -171,36 +139,28 @@ def main():
         new_info = input()
 
         if new_info == '22222':
-            print("Congrats on solving the Wordle! This was done in " + num_guesses + " attempts. See ya tomorrow!")
+            print("Congrats on solving the Wordle! This was done in ", num_guesses, " attempts. See ya tomorrow!")
+            exit(0)
 
 
+        # Our constraints data structures to limit the number of possible words remaining
         unavailable = []
-
         # {char : spot not in}
         available_diff_spot = {}
         correct = {}
 
         # Narrow down which characters are and are not in which positions
         for i in range(0, len(word)):
-            print(new_info[i])
             # update accordingly
             if new_info[i] == '0':
-                # The character is NOT in any spot. So we can add this info to our possChars list.
-                #for u in range(0, 5):
-                #    possChars[u].updateChar(word[i], new_info[i])
+                # The character is NOT in any spot. 
                 unavailable.append(word[i])
             elif new_info[i] == '1':
                 # The character is available, just in a different spot. So not this one.
-                #possChars[i].updateChar(word[i], new_info[i])
                 available_diff_spot[word[i]] = int(i)
             elif new_info[i] == '2':
                 # The character IS in this spot. So, every other character here is impossible.
                 # We can only update this spot because the same character can be repeated in other spots.
-                #for char, _ in allChars.items():
-                #    if char == word[i]:
-                #        possChars[i].updateChar(word[i], new_info[i])
-                #    else:
-                #        possChars[i].updateChar(char, 0)
                 correct[word[i]] = int(i)
             else:
                 print("Uh oh! This input is invalid!")
@@ -208,17 +168,13 @@ def main():
 
         possible_words = possWords.updatePossibleWords(unavailable, available_diff_spot, correct)
         print()
-        print(len(possible_words))
-        print("Next word suggestions: ", possible_words[:10])
-
+        print("Number of possible words remaining: " + str(len(possible_words)) + ". Next word suggestions: ", possible_words[:15])
 
         num_guesses += 1
     
-    print("Uh oh! Too many guesses on this Wordle! The word was: " + possWords.getPossibleWords() + ". Try again tomorrow!")
-
+    print("Uh oh! Too many guesses on this Wordle! The word was: ", possible_words, ". Try again tomorrow!")
 
 
 if __name__ == "__main__":
     main()
-
 
