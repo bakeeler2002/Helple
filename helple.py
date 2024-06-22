@@ -1,3 +1,5 @@
+allChars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
 class possibleWords:
     def __init__(self):
         self.possibleWords = []
@@ -25,7 +27,6 @@ class possibleWords:
             # Calculate the most common characters, so opening words can be given which provide the most information possible
             chars = {}
 
-            allChars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
             for c in allChars:
                 # char : {index: num_times}
                 chars[c] = 0
@@ -77,6 +78,9 @@ class possibleWords:
             # 1) Unique characters
             # 2) The most common characters are included
             return list(dict(sorted(words.items(), key = lambda item : item[1])).keys())[:5]
+        
+    def updatePossibleWords(self):
+        pass
 
 
 class CharState:
@@ -86,6 +90,8 @@ class CharState:
     AVAILABLE = 3
     
 class possibleChars:
+    # This is a dict of characters corresponding to a position in the input. 
+    # Many characters can get eliminated from a spot based on provided information.
     def __init__(self):
         self.possibleChars = {}
         self.setPossibleChars()
@@ -103,44 +109,66 @@ class possibleChars:
     
 
 # main
-possWords = possibleWords()
+def main():
+    possWords = possibleWords()
 
-possChars = []
-for i in range(0, 5):
-    possChars.append(possibleChars())
-#print(possibleWords.getPossibleWords())
+    possChars = []
+    for i in range(0, 5):
+        possChars.append(possibleChars())
 
-print("Welcome to Helple, the Wordle helper. Solve your daily Wordle with this application and get the words with the highest possibility of being the correct word.")
-print("Some good starting words are: ", possWords.getBestStartingWords("other"))
+    print("Welcome to Helple, the Wordle helper. Solve your daily Wordle with this application and get the words with the highest possibility of being the correct word.")
+    print("Some good starting words are: ", possWords.getBestStartingWords("other"))
 
-while True:
-    print("Enter chosen Wordle word: ", end="")
-    word = input()
+    num_guesses = 1
+    while num_guesses <= 6:
+        print("Enter chosen Wordle word: ", end="")
+        word = input().lower()
 
-    print("Enter results of Wordle guess (0 = unavailable, 1 = yellow, 2 = green) with format 22222 if word is correct, for example: ", end="")
-    new_info = input()
+        print("Enter results of Wordle guess (0 = unavailable/grey, 1 = yellow, 2 = green) with format 22222 if word is correct, for example: ", end="")
+        new_info = input()
+
+        if new_info == '22222':
+            print("Congrats on solving the Wordle! This was done in " + num_guesses + " attempts. See ya tomorrow!")
+
+        # Narrow down which characters are and are not in which positions
+        for i in range(0, len(word)):
+            print(new_info[i])
+            # update accordingly
+            if new_info[i] == '0':
+                # The character is NOT in any spot. So we can add this info to our possChars list.
+                for u in range(0, 5):
+                    possChars[u].updateChar(word[i], new_info[i])
+            elif new_info[i] == '1':
+                # The character is available, just in a different spot. So not this one.
+                possChars[i].updateChar(word[i], new_info[i])
+            elif new_info[i] == '2':
+                # The character IS in this spot. So, every other character here is impossible.
+                # We can only update this spot because the same character can be repeated in other spots.
+                for char, _ in allChars.items():
+                    if char == word[i]:
+                        possChars[i].updateChar(word[i], new_info[i])
+                    else:
+                        possChars[i].updateChar(char, 0)
+            else:
+                print("Uh oh! This input is invalid!")
+                exit(0)
 
 
-    if new_info == '22222':
-        print("YAY")
+        possWords.updatePossibleWords()
+
+        possible_words = possWords.getPossibleWords()
+        #print(possChars[3].getPossibleChars())
+        print()
+        print(len(possible_words))
 
 
-    for i in range(0, len(word)):
-        # update accordingly
-        print(word[i], "   r  ", new_info[i])
-        if new_info[i] == 0:
-            for u in range(0, 5):
-                possChars[u].updateChar(word[i], new_info[i])
-        else: 
-            possChars[i].updateChar(word[i], new_info[i])
+        num_guesses += 1
+    
+    print("Uh oh! Too many guesses on this Wordle! The word was: " + possWords.getPossibleWords() + ". Try again tomorrow!")
 
-    #print(word, " ", new_info)
-    possible_words = possWords.getPossibleWords()
-    #possible_chars = possChars.getPossibleChars()
-    #print(possible_chars)
-    print(possChars[3].getPossibleChars())
-    print()
-    print(len(possible_words))
 
+
+if __name__ == "__main__":
+    main()
 
 
