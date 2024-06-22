@@ -8,7 +8,7 @@ class possibleWords:
     def getAllPossibleWords(self):
         file = open("words.txt", "r")
         for line in file:
-            line = line[:len(line)-3]
+            line = line[:len(line)-1]
             words = line.split('\t')
             for word in words:
                 if word != '' and word != ' ':
@@ -79,8 +79,50 @@ class possibleWords:
             # 2) The most common characters are included
             return list(dict(sorted(words.items(), key = lambda item : item[1])).keys())[:5]
         
-    def updatePossibleWords(self):
-        pass
+    def updatePossibleWords(self, unavailable, available_diff_spot, correct):
+
+        print(unavailable)
+        print()
+        print(available_diff_spot)
+        print(correct)
+        print()
+
+        updated_words = []
+
+        for word in self.possibleWords:
+            add_flag = True
+
+            # grey characters : not in word
+            for u in unavailable:
+                if u in word:
+                    add_flag = False
+                    break
+                
+            # yellow characters : in word but different positions
+            for char, position in available_diff_spot.items():
+                if word[position] == char:
+                    add_flag = False
+                    break
+                
+                # must still be in the word
+                if char not in word:
+                    add_flag = False
+                    break
+
+            # green characters : in word AT same position
+            for char, position in correct.items():
+                if word[position] != char:
+                    add_flag = False
+                    break
+
+            if add_flag:
+                updated_words.append(word)
+
+                
+            
+        self.possibleWords = updated_words
+        return updated_words
+
 
 
 class CharState:
@@ -120,6 +162,7 @@ def main():
     print("Some good starting words are: ", possWords.getBestStartingWords("other"))
 
     num_guesses = 1
+
     while num_guesses <= 6:
         print("Enter chosen Wordle word: ", end="")
         word = input().lower()
@@ -130,36 +173,43 @@ def main():
         if new_info == '22222':
             print("Congrats on solving the Wordle! This was done in " + num_guesses + " attempts. See ya tomorrow!")
 
+
+        unavailable = []
+
+        # {char : spot not in}
+        available_diff_spot = {}
+        correct = {}
+
         # Narrow down which characters are and are not in which positions
         for i in range(0, len(word)):
             print(new_info[i])
             # update accordingly
             if new_info[i] == '0':
                 # The character is NOT in any spot. So we can add this info to our possChars list.
-                for u in range(0, 5):
-                    possChars[u].updateChar(word[i], new_info[i])
+                #for u in range(0, 5):
+                #    possChars[u].updateChar(word[i], new_info[i])
+                unavailable.append(word[i])
             elif new_info[i] == '1':
                 # The character is available, just in a different spot. So not this one.
-                possChars[i].updateChar(word[i], new_info[i])
+                #possChars[i].updateChar(word[i], new_info[i])
+                available_diff_spot[word[i]] = int(i)
             elif new_info[i] == '2':
                 # The character IS in this spot. So, every other character here is impossible.
                 # We can only update this spot because the same character can be repeated in other spots.
-                for char, _ in allChars.items():
-                    if char == word[i]:
-                        possChars[i].updateChar(word[i], new_info[i])
-                    else:
-                        possChars[i].updateChar(char, 0)
+                #for char, _ in allChars.items():
+                #    if char == word[i]:
+                #        possChars[i].updateChar(word[i], new_info[i])
+                #    else:
+                #        possChars[i].updateChar(char, 0)
+                correct[word[i]] = int(i)
             else:
                 print("Uh oh! This input is invalid!")
                 exit(0)
 
-
-        possWords.updatePossibleWords()
-
-        possible_words = possWords.getPossibleWords()
-        #print(possChars[3].getPossibleChars())
+        possible_words = possWords.updatePossibleWords(unavailable, available_diff_spot, correct)
         print()
         print(len(possible_words))
+        print("Next word suggestions: ", possible_words[:10])
 
 
         num_guesses += 1
