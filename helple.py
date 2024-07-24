@@ -154,7 +154,8 @@ def main():
             # update accordingly
             if new_info[i] == '0':
                 # The character is NOT in any spot. 
-                unavailable.append(word[i])
+                if word[i] not in correct.keys():
+                    unavailable.append(word[i])
             elif new_info[i] == '1':
                 # The character is available, just in a different spot. So not this one.
                 available_diff_spot[word[i]] = int(i)
